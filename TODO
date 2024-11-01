@@ -1,0 +1,15 @@
+V1
+
+1. Hit API with POSTMan Request
+1a. Versioning support / files
+1b. License
+1c.
+2. Create Mock Data / DTO classes
+3. Mock Server / Integration Tests
+4. DB Schema
+5a. Main scrapping logic
+5b. Kafka setup
+5c. hide API key
+6. UML Documentation
+7. DockerFile
+8. AWS documentation
