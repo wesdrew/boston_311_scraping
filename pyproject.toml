@@ -1,7 +1,7 @@
 [project]
 name = "boston311scraping"
 version = "0.1.0"
-description = "Add your description here"
+description = "We're polling Boston 311 and throwing what we find a table. They can't stop us."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
