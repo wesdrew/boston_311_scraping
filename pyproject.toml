@@ -1,0 +1,56 @@
+[project]
+name = "boston311scraping"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+    "ERA",
+    "ANN",
+    "S",
+    "BLE",
+    "FBT",
+    "B",
+    "A",
+    "C4",
+    "DTZ",
+    "T10",
+    "INT",
+    "ISC",
+    "ICN",
+    "LOG",
+    "G",
+    "T20",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SIM",
+    "TID",
+    "TC",
+    "ARG",
+    "PTH",
+    "I",
+    "E",
+    "W",
+    "PL",
+    "FURB",
+    "RUF",
+    "TRY"
+]
+
+[dependency-groups]
+dev = [
+    "aws-sam-cli>=1.154.0",
+    "cfn-lint>=1.43.4",
+]

@@ -1,0 +1,51 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      - id: ruff
+        name: Ruff linting
+        stages: [pre-commit, pre-push]
+        args: [ --fix ]
+      - id: ruff-format
+        name: Ruff formating
+        stages: [pre-commit, pre-push]
+
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v1.22.2
+    hooks:
+      - id: cfn-lint
+        name: Cloudformation Template linting
+        stages: [pre-commit, pre-push]
+        files: ^(infra)/.*\.(json|yml|yaml)$
+
+  - repo: local
+    hooks:
+      - id: uv-lock
+        name: uv lock check
+        entry: uv lock --locked
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: mypy
+        name: MyPy static analysis
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: true
+        stages: [pre-push]
+
+      - id: uv-sync
+        name: UV sync
+        entry: uv sync
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [post-checkout]
