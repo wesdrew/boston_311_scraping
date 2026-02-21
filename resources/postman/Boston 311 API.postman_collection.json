@@ -1,0 +1,133 @@
+{
+  "info": {
+    "_postman_id": "718e021b-a5bb-4bbd-9d51-9600fe0ce0f4",
+    "name": "Boston 311 API",
+    "description": "[https://wiki.open311.org/GeoReport_v2/](https://wiki.open311.org/GeoReport_v2/#get-service-requests)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "3943441"
+  },
+  "item": [
+    {
+      "name": "GetServicesList",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://311.boston.gov/open311/v2/services.json?extensions=true",
+          "protocol": "https",
+          "host": [
+            "311",
+            "boston",
+            "gov"
+          ],
+          "path": [
+            "open311",
+            "v2",
+            "services.json"
+          ],
+          "query": [
+            {
+              "key": "extensions",
+              "value": "true",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetServiceRequests",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://311.boston.gov/open311/v2/requests.json",
+          "protocol": "https",
+          "host": [
+            "311",
+            "boston",
+            "gov"
+          ],
+          "path": [
+            "open311",
+            "v2",
+            "requests.json"
+          ],
+          "query": [
+            {
+              "key": "extensions",
+              "value": "true",
+              "description": "extended metadata",
+              "disabled": true
+            },
+            {
+              "key": "q",
+              "value": null,
+              "description": "text search param",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "updated_after",
+              "value": null,
+              "description": "Returns requests updated after a specific timestamp",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "updated_before",
+              "value": null,
+              "description": "Returns requests updated before a specific timestamp",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "page",
+              "value": null,
+              "description": "page number",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "per_page",
+              "value": "100",
+              "description": "per page",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "service_request_id",
+              "value": null,
+              "description": "specific request IDs",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "service_code",
+              "value": null,
+              "description": "Filter by the type of service",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "start_date",
+              "value": "2026-02-21T01:42:12Z",
+              "description": "The earliest datetime to include",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "end_date",
+              "value": null,
+              "description": "The latest datetime to include",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
