@@ -1,6 +1,6 @@
 # .cfnlintrc.yaml
 templates:
-  - infra/**/*.yaml
+  - polling/infra/**/*.yaml
 ignore_checks:
   - W3011
 regions:
