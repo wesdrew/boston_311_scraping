@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "We're polling Boston 311 and throwing what we find a table. They can't stop us."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "aws-cdk-lib>=2.239.0",
-]
+dependencies = []
 
 [tool.ruff]
 line-length = 120
@@ -51,8 +49,11 @@ select = [
     "TRY"
 ]
 
-[dependency-groups]
-dev = [
-    "aws-sam-cli>=1.154.0",
-    "cfn-lint>=1.43.4",
+[tool.uv.workspace]
+members = [
+    "infra",
+    "polling",
 ]
+
+[dependency-groups]
+dev = []

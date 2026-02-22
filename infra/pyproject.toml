@@ -1,0 +1,10 @@
+[project]
+name = "infra"
+version = "0.1.0"
+description = "All the infra code. We're learning AWS CDK!"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aws-cdk-aws-lambda-python-alpha>=2.239.0a0",
+    "aws-cdk-lib>=2.239.0",
+]
