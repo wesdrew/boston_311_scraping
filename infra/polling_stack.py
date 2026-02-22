@@ -8,7 +8,7 @@ from constructs import Construct
 try:
     ROOT_DIR: Path = Path(os.getenv("PROJECT_ROOT")).resolve()
 except KeyError as e:
-    raise RuntimeError(message="PROJECT_ROOT not defined") from e
+    raise RuntimeError(msg="PROJECT_ROOT not defined") from e
 
 
 class PollingStack(Stack):
