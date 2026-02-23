@@ -48,6 +48,9 @@ select = [
     "RUF",
     "TRY"
 ]
+ignore = [
+    "TRY003"
+]
 
 [tool.uv.workspace]
 members = [
