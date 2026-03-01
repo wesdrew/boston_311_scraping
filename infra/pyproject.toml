@@ -8,3 +8,10 @@ dependencies = [
     "aws-cdk-aws-lambda-python-alpha>=2.239.0a0",
     "aws-cdk-lib>=2.239.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["polling_stack", "app"]
