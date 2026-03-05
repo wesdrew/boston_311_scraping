@@ -1,14 +1,6 @@
-import os
-from pathlib import Path
-
 from aws_cdk import Duration, Stack, aws_lambda
 from aws_cdk.aws_lambda_python_alpha import PythonFunction
 from constructs import Construct
-
-try:
-    ROOT_DIR: Path = Path(os.getenv("PROJECT_ROOT")).resolve()
-except KeyError as e:
-    raise RuntimeError(msg="PROJECT_ROOT not defined") from e
 
 
 class PollingStack(Stack):
@@ -18,8 +10,8 @@ class PollingStack(Stack):
         self.polling_fn = PythonFunction(
             self,
             id="Boston311PollingLambda",
-            entry=os.fspath(ROOT_DIR / "polling"),
-            index="app.py",
+            entry="polling",
+            index="src/app.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),
