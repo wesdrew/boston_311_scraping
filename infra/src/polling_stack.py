@@ -1,8 +1,5 @@
-import os
-from pathlib import Path
-
-from aws_cdk import DockerImage, Duration, Stack, aws_lambda
-from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
+from aws_cdk import Duration, Stack, aws_lambda
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
 from constructs import Construct
 
 
