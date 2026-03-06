@@ -10,7 +10,7 @@ BASE_URL = "https://311.boston.gov/open311/v2/requests.json"
 
 
 def get_service_requests() -> tuple[int, dict]:
-    date: datetime = datetime.now(timezone.utc) - timedelta(minutes=5)
+    date: datetime = datetime.now(timezone.utc) - timedelta(minutes=20)
     date_str = date.isoformat(timespec="seconds").replace("+00:00", "Z")
 
     params: dict = {"start_date": date_str}
