@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "We're polling Boston 311 and throwing what we find a table. They can't stop us."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["infra", "polling"]
+dependencies = [
+    "infra",
+    "opentelemetry-sdk>=1.40.0",
+    "polling",
+]
 
 [tool.ruff]
 line-length = 120
