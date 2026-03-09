@@ -59,6 +59,7 @@ ignore = [
 members = [
     "infra",
     "polling",
+    "shared",
 ]
 
 [tool.uv.sources]
