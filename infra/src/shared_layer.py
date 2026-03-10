@@ -10,7 +10,7 @@ class SharedLayer(Construct):
         self._layer = PythonLayerVersion(
             self,
             "Layer",
-            entry="shared",
+            entry="shared/src",
             compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
             description="Shared utilities and dependencies for Boston 311 project",
         )
