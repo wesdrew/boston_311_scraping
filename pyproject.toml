@@ -65,6 +65,7 @@ members = [
 [tool.uv.sources]
 polling = { workspace = true }
 infra = { workspace = true }
+shared = { workspace = true }
 
 [dependency-groups]
 dev = [

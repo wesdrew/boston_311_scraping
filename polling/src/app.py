@@ -4,6 +4,8 @@ from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from requests import Response, get
 
+from shared.service_request_response import ServiceRequestResponse
+
 logger: Logger = Logger()
 
 BASE_URL = "https://311.boston.gov/open311/v2/requests.json"
@@ -24,4 +26,6 @@ def handler(_event: dict, _context: LambdaContext) -> dict:
     logger.info("Fetching service requests from Boston 311")
     data: tuple[int, dict] = get_service_requests()
     logger.info("Got service requests", number_of_requests=len(data[1]))
+    requests: list[ServiceRequestResponse] = [ServiceRequestResponse(r) for r in data[1]]
+    logger.info("Pydantic models", requests=requests)
     return {"statusCode": data[0], "body": data[1]}

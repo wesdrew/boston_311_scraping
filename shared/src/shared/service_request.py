@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
@@ -14,23 +13,23 @@ class ServiceRequest(BaseModel):
     # Standard Open311 fields
     service_request_id: str
     status: str
-    status_notes: Optional[str] = None
-    service_name: Optional[str] = None
-    service_code: Optional[str] = None
-    description: Optional[str] = None
-    requested_datetime: Optional[datetime] = None
-    updated_datetime: Optional[datetime] = None
-    expected_datetime: Optional[datetime] = None
-    address: Optional[str] = None
-    address_id: Optional[str] = None
-    zipcode: Optional[str] = None
-    lat: Optional[float] = None
-    long: Optional[float] = None
-    media_url: Optional[HttpUrl] = None
+    status_notes: str | None = None
+    service_name: str | None = None
+    service_code: str | None = None
+    description: str | None = None
+    requested_datetime: datetime | None = None
+    updated_datetime: datetime | None = None
+    expected_datetime: datetime | None = None
+    address: str | None = None
+    address_id: str | None = None
+    zipcode: str | None = None
+    lat: float | None = None
+    long: float | None = None
+    media_url: HttpUrl | None = None
 
     # Boston Extensions
-    token: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
-    attributes: Optional[List[Attribute]] = None
-    extended_attributes: Optional[ExtendedAttributes] = None
-    notes: Optional[List[Note]] = None
+    token: str | None = None
+    details: dict[str, Any] = {}
+    attributes: list[Attribute] = []
+    extended_attributes: list[ExtendedAttributes] = []
+    notes: list[Note] = []
