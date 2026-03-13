@@ -2,3 +2,6 @@
 cdk.out
 
 **/__pycache__
+
+polling/requirements.txt
+shared/requirements.txt

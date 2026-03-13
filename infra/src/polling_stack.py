@@ -20,8 +20,8 @@ class PollingStack(Stack):
         self.polling_fn = PythonFunction(
             self,
             id="Boston311PollingLambda",
-            entry="polling/src",
-            index="app.py",
+            entry="polling",
+            index="src/app.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),
@@ -38,6 +38,7 @@ class PollingStack(Stack):
                 exec_wrapper=aws_lambda.AdotLambdaExecWrapper.INSTRUMENT_HANDLER,
             ),
             environment={
+                "PYTHONPATH": "/var/task/src",
                 otel_env.OTEL_SERVICE_NAME: "boston311.polling",
                 otel_env.OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",

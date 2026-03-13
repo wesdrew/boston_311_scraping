@@ -20,7 +20,6 @@ quote-style = "double"
 [tool.ruff.lint]
 select = [
     "ERA",
-    "S",
     "BLE",
     "FBT",
     "B",

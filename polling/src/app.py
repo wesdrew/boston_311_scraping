@@ -21,4 +21,4 @@ def handler(_event: dict, _context: LambdaContext) -> dict:
     request: ThreeOneOneRequest = ThreeOneOneRequest(start_date=requests_starting_at_datetime)
     response: ServiceRequestResponse = client.get_service_requests(request)
     logger.info("Response from 311", response=response)
-    return {"data": response}
+    return {"data": response.model_dump_json()}
