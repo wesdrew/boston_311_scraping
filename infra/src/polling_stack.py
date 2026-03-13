@@ -1,6 +1,6 @@
 import opentelemetry.sdk.environment_variables as otel_env
 from aws_cdk import Duration, RemovalPolicy, Stack, aws_events, aws_events_targets, aws_lambda, aws_logs
-from aws_cdk.aws_lambda_python_alpha import PythonFunction
+from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
 from constructs import Construct
 from shared_layer import create_shared_layer
 
@@ -20,14 +20,15 @@ class PollingStack(Stack):
         self.polling_fn = PythonFunction(
             self,
             id="Boston311PollingLambda",
-            entry="polling",
-            index="src/app.py",
+            entry="polling/src",
+            index="app.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),
             memory_size=256,
             log_group=polling_log_group,
             layers=[create_shared_layer(self).get_layer()],
+            bundling=BundlingOptions(asset_excludes=["tests", "__pycache__", "*.pyc"]),
             tracing=aws_lambda.Tracing.ACTIVE,
             insights_version=aws_lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
             adot_instrumentation=aws_lambda.AdotInstrumentationConfig(
