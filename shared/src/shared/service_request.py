@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
@@ -31,5 +32,5 @@ class ServiceRequest(BaseModel):
     token: str | None = None
     details: dict[str, Any] = {}
     attributes: list[Attribute] = []
-    extended_attributes: list[ExtendedAttributes] = []
+    extended_attributes: list[ExtendedAttributes] | ExtendedAttributes | None = None
     notes: list[Note] = []

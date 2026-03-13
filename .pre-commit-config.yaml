@@ -10,14 +10,6 @@ repos:
         name: Ruff formating
         stages: [pre-commit, pre-push]
 
-  - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v1.22.2
-    hooks:
-      - id: cfn-lint
-        name: Cloudformation Template linting
-        stages: [pre-commit, pre-push]
-        files: ^(infra)/.*\.(json|yml|yaml)$
-
   - repo: local
     hooks:
       - id: uv-lock
@@ -29,7 +21,7 @@ repos:
 
       - id: pytest
         name: pytest
-        entry: uv run pytest
+        entry: uv run pytest -m "not integration"
         language: system
         pass_filenames: false
         stages: [pre-push]

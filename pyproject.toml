@@ -8,6 +8,7 @@ dependencies = [
     "infra",
     "opentelemetry-sdk>=1.40.0",
     "polling",
+    "pytest>=9.0.2",
 ]
 
 [tool.ruff]
@@ -52,8 +53,19 @@ select = [
     "TRY"
 ]
 ignore = [
-    "TRY003"
+    "TC001",
+    "TRY003",
+    "S101"
 ]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "shared/src",
+    "infra/src",
+    "polling/src",
+]
+norecursedirs = ["cdk.out"]
+markers = ["integration: marks tests as integration tests"]
 
 [tool.uv.workspace]
 members = [

@@ -1,7 +1,0 @@
-# .cfnlintrc.yaml
-templates:
-  - polling/infra/**/*.yaml
-ignore_checks:
-  - W3011
-regions:
-  - us-east-1

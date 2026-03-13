@@ -167,6 +167,7 @@ dependencies = [
     { name = "infra" },
     { name = "opentelemetry-sdk" },
     { name = "polling" },
+    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -180,6 +181,7 @@ requires-dist = [
     { name = "infra", editable = "infra" },
     { name = "opentelemetry-sdk", specifier = ">=1.40.0" },
     { name = "polling", editable = "polling" },
+    { name = "pytest", specifier = ">=9.0.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -591,12 +593,14 @@ version = "0.1.0"
 source = { editable = "polling" }
 dependencies = [
     { name = "aws-lambda-powertools", extra = ["all"] },
+    { name = "pydantic" },
     { name = "requests" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aws-lambda-powertools", extras = ["all"], specifier = ">=3.24.0" },
+    { name = "pydantic", specifier = ">=2.12.5" },
     { name = "requests", specifier = ">=2.32.5" },
 ]
 
