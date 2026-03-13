@@ -81,6 +81,7 @@ shared = { workspace = true }
 [dependency-groups]
 dev = [
     "ruff>=0.4.0",
-    "pytest>=8.0.0"
+    "pytest>=8.0.0",
+    "mypy>=1.19.1",
 ]
 
