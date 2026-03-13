@@ -44,6 +44,8 @@ class PollingStack(Stack):
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",
                 otel_env.OTEL_LOG_LEVEL: "info",
                 otel_env.OTEL_TRACES_SAMPLER: "xray",
+                otel_env.OTEL_METRICS_EXPORTER: "otlp",
+                otel_env.OTEL_TRACES_EXPORTER: "otlp",
                 otel_env.OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "delta",
             },
         )
