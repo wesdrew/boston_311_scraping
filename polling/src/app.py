@@ -2,26 +2,23 @@ from datetime import datetime, timedelta, timezone
 
 from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
-from requests import Response, get
+from client import ThreeOneOneClient, ThreeOneOneRequest
 
-logger: Logger = Logger()
+from shared.service_request_response import ServiceRequestResponse
+
+logger: Logger = Logger(service="polling")
 
 BASE_URL = "https://311.boston.gov/open311/v2/requests.json"
 
 
-def get_service_requests() -> tuple[int, dict]:
-    date: datetime = datetime.now(timezone.utc) - timedelta(minutes=20)
-    date_str = date.isoformat(timespec="seconds").replace("+00:00", "Z")
-
-    params: dict = {"start_date": date_str}
-    response: Response = get(BASE_URL, params=params, timeout=1.0)
-    response.raise_for_status()
-    return (response.status_code, response.json())
+client: ThreeOneOneClient = ThreeOneOneClient(BASE_URL)
 
 
 @logger.inject_lambda_context
 def handler(_event: dict, _context: LambdaContext) -> dict:
     logger.info("Fetching service requests from Boston 311")
-    data: tuple[int, dict] = get_service_requests()
-    logger.info("Got service requests", number_of_requests=len(data[1]))
-    return {"statusCode": data[0], "body": data[1]}
+    requests_starting_at_datetime: datetime = datetime.now(timezone.utc) - timedelta(minutes=20)
+    request: ThreeOneOneRequest = ThreeOneOneRequest(start_date=requests_starting_at_datetime)
+    response: ServiceRequestResponse = client.get_service_requests(request)
+    logger.info("Response from 311", response=response)
+    return {"data": response.model_dump_json()}

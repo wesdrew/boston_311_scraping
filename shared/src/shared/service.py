@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict
 
 from shared.service_extended_attributes import ServiceExtendedAttributes
@@ -11,11 +9,11 @@ class Service(BaseModel):
     # Standard Open311 fields
     service_code: str
     service_name: str
-    description: Optional[str] = None
+    description: str | None = None
     metadata: bool
     type: str
-    keywords: Optional[str] = None
-    group: Optional[str] = None
+    keywords: str | None = None
+    group: str | None = None
 
     # Boston Extensions
-    extended_attributes: Optional[ServiceExtendedAttributes] = None
+    extended_attributes: ServiceExtendedAttributes | None = None

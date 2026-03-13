@@ -1,6 +1,6 @@
 import opentelemetry.sdk.environment_variables as otel_env
 from aws_cdk import Duration, RemovalPolicy, Stack, aws_events, aws_events_targets, aws_lambda, aws_logs
-from aws_cdk.aws_lambda_python_alpha import PythonFunction
+from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
 from constructs import Construct
 from shared_layer import create_shared_layer
 
@@ -28,6 +28,7 @@ class PollingStack(Stack):
             memory_size=256,
             log_group=polling_log_group,
             layers=[create_shared_layer(self).get_layer()],
+            bundling=BundlingOptions(asset_excludes=["tests", "__pycache__", "*.pyc"]),
             tracing=aws_lambda.Tracing.ACTIVE,
             insights_version=aws_lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
             adot_instrumentation=aws_lambda.AdotInstrumentationConfig(
@@ -37,6 +38,7 @@ class PollingStack(Stack):
                 exec_wrapper=aws_lambda.AdotLambdaExecWrapper.INSTRUMENT_HANDLER,
             ),
             environment={
+                "PYTHONPATH": "/var/task/src",
                 otel_env.OTEL_SERVICE_NAME: "boston311.polling",
                 otel_env.OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",

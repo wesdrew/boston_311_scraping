@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict
 
 
@@ -9,4 +7,4 @@ class Attribute(BaseModel):
     label: str
     value: str
     name: str
-    code: Optional[str] = None
+    code: str | None = None
