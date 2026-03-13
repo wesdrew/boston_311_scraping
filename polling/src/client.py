@@ -15,6 +15,6 @@ class ThreeOneOneClient:
         self.base_url = base_url
 
     def get_service_requests(self, request: ThreeOneOneRequest) -> ServiceRequestResponse:
-        response: Response = get(self.base_url, params=request.model_dump(), timeout=1.0)
+        response: Response = get(self.base_url, params=request.model_dump(exclude_none=True), timeout=5.0)
         response.raise_for_status()
-        return ServiceRequestResponse(response.json())
+        return ServiceRequestResponse.model_validate(response.json())
