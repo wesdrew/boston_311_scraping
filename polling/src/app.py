@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from client import ThreeOneOneClient, ThreeOneOneRequest
+from counters import requests_ingested_counter
 
 from shared.service_request_response import ServiceRequestResponse
 
@@ -20,5 +21,7 @@ def handler(_event: dict, _context: LambdaContext) -> dict:
     requests_starting_at_datetime: datetime = datetime.now(timezone.utc) - timedelta(minutes=20)
     request: ThreeOneOneRequest = ThreeOneOneRequest(start_date=requests_starting_at_datetime)
     response: ServiceRequestResponse = client.get_service_requests(request)
-    logger.info("Response from 311", response=response)
+    count = len(response.root)
+    requests_ingested_counter.add(count)
+    logger.info("Response from 311", count=count, response=response)
     return {"data": response.model_dump_json()}
