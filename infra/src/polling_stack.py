@@ -1,3 +1,4 @@
+import opentelemetry.environment_variables as otel_core_env
 import opentelemetry.sdk.environment_variables as otel_env
 from aws_cdk import Duration, RemovalPolicy, Stack, aws_events, aws_events_targets, aws_lambda, aws_logs
 from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
@@ -44,8 +45,8 @@ class PollingStack(Stack):
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",
                 otel_env.OTEL_LOG_LEVEL: "info",
                 otel_env.OTEL_TRACES_SAMPLER: "xray",
-                otel_env.OTEL_METRICS_EXPORTER: "otlp",
-                otel_env.OTEL_TRACES_EXPORTER: "otlp",
+                otel_core_env.OTEL_METRICS_EXPORTER: "otlp",
+                otel_core_env.OTEL_TRACES_EXPORTER: "otlp",
                 otel_env.OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "delta",
             },
         )
@@ -55,6 +56,7 @@ class PollingStack(Stack):
             "PollingScheduleRule",
             schedule=aws_events.Schedule.rate(Duration.minutes(10)),
             description="Trigger Boston 311 polling every 5 minutes",
+            enabled=False,
         )
 
         rule.add_target(aws_events_targets.LambdaFunction(self.polling_fn))
