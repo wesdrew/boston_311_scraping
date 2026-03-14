@@ -56,6 +56,7 @@ class PollingStack(Stack):
             "PollingScheduleRule",
             schedule=aws_events.Schedule.rate(Duration.minutes(10)),
             description="Trigger Boston 311 polling every 5 minutes",
+            enabled=False,
         )
 
         rule.add_target(aws_events_targets.LambdaFunction(self.polling_fn))
