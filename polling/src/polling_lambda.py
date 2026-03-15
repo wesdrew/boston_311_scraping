@@ -96,11 +96,11 @@ def _create_polling_failed_event(exception: Exception, context: LambdaContext) -
     )
 
 
-def send_to_sqs(client: SQSClient, queue_url: str, response: ServiceRequestResponse) -> int:
+def send_to_sqs(sqs_client: SQSClient, queue_url: str, response: ServiceRequestResponse) -> int:
     entries = [{"Id": req.service_request_id, "MessageBody": req.model_dump_json()} for req in response.root]
     failed_count: int = 0
     for chunk in batched(entries, 10):
-        result: SendMessageBatchResultTypeDef = client.send_message_batch(QueueUrl=queue_url, Entries=list(chunk))
+        result: SendMessageBatchResultTypeDef = sqs_client.send_message_batch(QueueUrl=queue_url, Entries=list(chunk))
         if result.get("Failed"):
             failed_count += len(result["Failed"])
             logger.error(
@@ -125,3 +125,4 @@ def handler(_event: dict, context: LambdaContext) -> dict:
         logger.exception("Exception in polling function")
         failed_event: AppEvent = _create_polling_failed_event(e, context)
         sns_client.publish(TopicArn=os.environ[APP_EVENTS_TOPIC_ARN], Message=failed_event.model_dump_json())
+        raise

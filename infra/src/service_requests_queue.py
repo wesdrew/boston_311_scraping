@@ -10,14 +10,14 @@ class ServiceRequestsQueue(Construct):
     def __init__(self, scope: Construct, construct_id: str) -> None:
         super().__init__(scope, construct_id)
 
-        dlq: aws_sqs.Queue = aws_sqs.Queue(
+        self.dlq: aws_sqs.Queue = aws_sqs.Queue(
             self,
-            "PollingDLQ",
+            "DLQ",
             retention_period=Duration.days(14),
             removal_policy=RemovalPolicy.RETAIN,
         )
         self.queue: aws_sqs.Queue = aws_sqs.Queue(
             self,
-            "PollingQueue",
-            dead_letter_queue=aws_sqs.DeadLetterQueue(max_receive_count=3, queue=dlq),
+            "Queue",
+            dead_letter_queue=aws_sqs.DeadLetterQueue(max_receive_count=3, queue=self.dlq),
         )

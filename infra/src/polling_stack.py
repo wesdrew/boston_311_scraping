@@ -4,7 +4,7 @@ from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
 from constructs import Construct
 from notifications import Notifications
 from service_requests_queue import ServiceRequestsQueue
-from shared_layer import create_shared_layer
+from shared_layer import SharedLayer
 
 
 class PollingStack(Stack):
@@ -24,7 +24,7 @@ class PollingStack(Stack):
         )
 
         srq: ServiceRequestsQueue = ServiceRequestsQueue(self, "ServiceRequestsQueue")
-        notifications: Notifications = Notifications(self, "Boston311PollingEvents")
+        notifications: Notifications = Notifications(self, "Notifications")
 
         self.polling_fn = PythonFunction(
             self,
@@ -36,7 +36,7 @@ class PollingStack(Stack):
             timeout=Duration.seconds(300),
             memory_size=256,
             log_group=polling_log_group,
-            layers=[create_shared_layer(self).get_layer()],
+            layers=[SharedLayer(self, "SharedResources").layer],
             bundling=BundlingOptions(asset_excludes=["tests", "__pycache__", "*.pyc"]),
             tracing=aws_lambda.Tracing.ACTIVE,
             insights_version=aws_lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
