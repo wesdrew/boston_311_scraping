@@ -4,7 +4,7 @@ import pytest
 from client import ThreeOneOneClient
 from request import ThreeOneOneRequest
 
-from shared.service_request_response import ServiceRequestResponse
+from shared.boston_311_api.service_request_response import ServiceRequestResponse
 
 BASE_URL = "https://311.boston.gov/open311/v2/requests.json"
 

@@ -1,6 +1,6 @@
 from pydantic import RootModel
 
-from shared.service import Service
+from shared.boston_311_api.service import Service
 
 
 class ServiceResponse(RootModel):
