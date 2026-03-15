@@ -172,6 +172,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "cdk-nag" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
@@ -187,6 +188,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "cdk-nag", specifier = ">=2.37.55" },
     { name = "mypy", specifier = ">=1.19.1" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "ruff", specifier = ">=0.4.0" },
@@ -264,6 +266,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6e/00/2432bb2d445b39b5407f0a90e01b9a271475eea7caf913d7a86bcb956385/cattrs-25.3.0.tar.gz", hash = "sha256:1ac88d9e5eda10436c4517e390a4142d88638fe682c436c93db7ce4a277b884a", size = 509321, upload-time = "2025-10-07T12:26:08.737Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d8/2b/a40e1488fdfa02d3f9a653a61a5935ea08b3c2225ee818db6a76c7ba9695/cattrs-25.3.0-py3-none-any.whl", hash = "sha256:9896e84e0a5bf723bc7b4b68f4481785367ce07a8a02e7e9ee6eb2819bc306ff", size = 70738, upload-time = "2025-10-07T12:26:06.603Z" },
+]
+
+[[package]]
+name = "cdk-nag"
+version = "2.37.55"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aws-cdk-lib" },
+    { name = "constructs" },
+    { name = "jsii" },
+    { name = "publication" },
+    { name = "typeguard" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/e0/b0e6b23a8efccb0970006a0e9bfa2953b6faa280598a1d1fd4ded7bf354a/cdk_nag-2.37.55.tar.gz", hash = "sha256:e9dc517070ef5a19deef95e79731e5624bd86cd07b56d210380408ea1314e47b", size = 761495, upload-time = "2025-10-17T00:18:46.424Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/ad/7cf42fe81acf6f40016bc8359fe28efad002a7accb7cb535186a449c4c3a/cdk_nag-2.37.55-py3-none-any.whl", hash = "sha256:bf83bcdeb98ac20bb813cac291af121d91c5a296fa815e01f93886b4f8b38845", size = 755391, upload-time = "2025-10-17T00:18:45.135Z" },
 ]
 
 [[package]]
