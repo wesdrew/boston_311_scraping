@@ -40,19 +40,16 @@ select = [
     "SLF",
     "SIM",
     "TID",
-    "TC",
     "ARG",
     "PTH",
     "I",
     "E",
     "W",
-    "PL",
     "FURB",
     "RUF",
     "TRY"
 ]
 ignore = [
-    "TC001",
     "TRY003",
     "S101"
 ]
@@ -60,8 +57,8 @@ ignore = [
 [tool.pytest.ini_options]
 pythonpath = [
     "shared/src",
-    "infra/src",
     "polling/src",
+    "infra/src",
 ]
 norecursedirs = ["cdk.out"]
 markers = ["integration: marks tests as integration tests"]

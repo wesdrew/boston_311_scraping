@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from shared.service_extended_attributes import ServiceExtendedAttributes
+from shared.boston_311_api.service_extended_attributes import ServiceExtendedAttributes
 
 
 class Service(BaseModel):

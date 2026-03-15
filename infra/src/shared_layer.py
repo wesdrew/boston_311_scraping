@@ -4,6 +4,10 @@ from constructs import Construct
 
 
 class SharedLayer(Construct):
+    """
+    Shared models and code.
+    """
+
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

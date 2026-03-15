@@ -17,3 +17,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "boto3-stubs[sns,sqs]>=1.42.68",
+    "moto[sns,sqs]>=5.1.22",
+]

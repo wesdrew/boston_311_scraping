@@ -2,14 +2,20 @@ import opentelemetry.sdk.environment_variables as otel_env
 from aws_cdk import Duration, RemovalPolicy, Stack, aws_events, aws_events_targets, aws_lambda, aws_logs
 from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction
 from constructs import Construct
+from notifications import Notifications
+from service_requests_queue import ServiceRequestsQueue
 from shared_layer import create_shared_layer
 
 
 class PollingStack(Stack):
+    """
+    Polling lambda on cron trigger pulling service requests from the Boston311 API.
+    """
+
     def __init__(self, scope: Construct, construct_id: str, **kwargs: dict) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        polling_log_group = aws_logs.LogGroup(
+        polling_log_group: aws_logs.LogGroup = aws_logs.LogGroup(
             self,
             "PollingLogGroup",
             log_group_name="Boston311.polling",
@@ -17,11 +23,14 @@ class PollingStack(Stack):
             removal_policy=RemovalPolicy.RETAIN,
         )
 
+        srq: ServiceRequestsQueue = ServiceRequestsQueue(self, "ServiceRequestsQueue")
+        notifications: Notifications = Notifications(self, "Boston311PollingEvents")
+
         self.polling_fn = PythonFunction(
             self,
             id="Boston311PollingLambda",
             entry="polling",
-            index="src/app.py",
+            index="src/polling_lambda.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),
@@ -39,6 +48,8 @@ class PollingStack(Stack):
             ),
             environment={
                 "PYTHONPATH": "/var/task/src",
+                "SERVICE_REQUESTS_QUEUE_URL": srq.queue.queue_url,
+                "APP_EVENTS_TOPIC_ARN": notifications.topic.topic_arn,
                 otel_env.OTEL_SERVICE_NAME: "boston311.polling",
                 otel_env.OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",
@@ -48,11 +59,14 @@ class PollingStack(Stack):
             },
         )
 
-        rule = aws_events.Rule(
+        srq.queue.grant_send_messages(self.polling_fn)
+        notifications.topic.grant_publish(self.polling_fn)
+
+        rule: aws_events.Rule = aws_events.Rule(
             self,
             "PollingScheduleRule",
             schedule=aws_events.Schedule.rate(Duration.minutes(10)),
-            description="Trigger Boston 311 polling every 5 minutes",
+            description="Trigger Boston 311 polling every 10 minutes",
         )
 
         rule.add_target(aws_events_targets.LambdaFunction(self.polling_fn))

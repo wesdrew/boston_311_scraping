@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from shared.photo import Photo
+from shared.boston_311_api.photo import Photo
 
 
 class ExtendedAttributes(BaseModel):

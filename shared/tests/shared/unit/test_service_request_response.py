@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from shared.service_request_response import ServiceRequestResponse
+from shared.boston_311_api.service_request_response import ServiceRequestResponse
 
 
 def test_service_request_response_empty():

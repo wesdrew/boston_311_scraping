@@ -3,9 +3,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
-from shared.attribute import Attribute
-from shared.extended_attributes import ExtendedAttributes
-from shared.note import Note
+from shared.boston_311_api.attribute import Attribute
+from shared.boston_311_api.extended_attributes import ExtendedAttributes
+from shared.boston_311_api.note import Note
 
 
 class ServiceRequest(BaseModel):
