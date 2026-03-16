@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import boto3
 import pytest
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from polling.polling_lambda import poll_and_enqueue_response
@@ -119,8 +120,10 @@ def dev_lambda():
     cfn = boto3.client("cloudformation", region_name=REGION)
     try:
         resources = cfn.list_stack_resources(StackName=STACK_NAME)["StackResourceSummaries"]
-    except cfn.exceptions.ValidationError:
-        pytest.skip(f"{STACK_NAME} stack not deployed")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ValidationError":
+            pytest.skip(f"{STACK_NAME} stack not deployed")
+        raise
 
     lambda_resource = next(
         (r for r in resources if r["ResourceType"] == "AWS::Lambda::Function"),
