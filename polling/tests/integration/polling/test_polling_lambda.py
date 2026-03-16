@@ -1,5 +1,4 @@
 import json
-import time
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -9,37 +8,16 @@ from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from polling.polling_lambda import poll_and_enqueue_response
-from shared.boston_311_api.service_request import ServiceRequest
-from shared.boston_311_api.service_request_response import ServiceRequestResponse
+from tests.helpers import make_context, make_response
 
 REGION = "us-east-1"
 STACK_NAME = "Boston311Polling-dev"
 
 
-# ---------------------------------------------------------------------------
-# Moto helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_response(count: int) -> ServiceRequestResponse:
-    return ServiceRequestResponse([ServiceRequest(service_request_id=str(i), status="open") for i in range(count)])
-
-
-def _make_context() -> MagicMock:
-    context = MagicMock()
-    context.aws_request_id = "test-request-id"
-    context.function_name = "test-function"
-    context.function_version = "$LATEST"
-    context.invoked_function_arn = "arn:aws:lambda:us-east-1:123456789:function:test"
-    context.log_group_name = "/aws/lambda/test"
-    context.log_stream_name = "2026/03/15/[$LATEST]abc123"
-    return context
-
-
 @pytest.fixture
 def polling_client():
     mock = MagicMock()
-    mock.get_service_requests.return_value = _make_response(3)
+    mock.get_service_requests.return_value = make_response(3)
     return mock
 
 
@@ -58,7 +36,7 @@ def test_messages_enqueued_to_sqs(polling_client):
     topic_arn = sns.create_topic(Name="test-topic")["TopicArn"]
 
     poll_and_enqueue_response(
-        polling_client, sqs, sns, _make_context(), sqs_queue_url=queue_url, sns_topic_arn=topic_arn
+        polling_client, sqs, sns, make_context(), sqs_queue_url=queue_url, sns_topic_arn=topic_arn
     )
 
     messages = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10)["Messages"]
@@ -86,7 +64,7 @@ def test_completed_event_published_to_sns(polling_client):
     sns.subscribe(TopicArn=topic_arn, Protocol="sqs", Endpoint=capture_queue_arn)
 
     poll_and_enqueue_response(
-        polling_client, sqs, sns, _make_context(), sqs_queue_url=queue_url, sns_topic_arn=topic_arn
+        polling_client, sqs, sns, make_context(), sqs_queue_url=queue_url, sns_topic_arn=topic_arn
     )
 
     captured = sqs.receive_message(QueueUrl=capture_queue_url, MaxNumberOfMessages=1)["Messages"]
@@ -107,7 +85,7 @@ def test_completed_event_published_to_sns(polling_client):
 def _drain_queue(sqs, queue_url: str) -> None:
     """Receive and delete all messages currently in the queue."""
     while True:
-        resp = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=1)
+        resp = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=0)
         messages = resp.get("Messages", [])
         if not messages:
             break
@@ -198,13 +176,13 @@ def test_dev_lambda_polls_and_enqueues(dev_lambda, sns_capture_queue):
 
     response = lambda_client.invoke(FunctionName=function_name, InvocationType="RequestResponse")
     assert response["StatusCode"] == 200
-    assert "FunctionError" not in response, response["FunctionError"]
+    assert "FunctionError" not in response, response.get("FunctionError")
 
     # Collect all SQS messages (poll until a full empty pass)
     sqs_messages = []
     empty_passes = 0
     while empty_passes < 2:
-        result = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
+        result = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=2)
         batch = result.get("Messages", [])
         if batch:
             sqs_messages.extend(batch)
@@ -213,7 +191,6 @@ def test_dev_lambda_polls_and_enqueues(dev_lambda, sns_capture_queue):
             empty_passes += 1
 
     # Read SNS capture queue for the AppEvent
-    time.sleep(2)  # allow SNS delivery
     captured = sqs.receive_message(QueueUrl=sns_capture_queue, MaxNumberOfMessages=1, WaitTimeSeconds=10)
     sns_messages = captured.get("Messages", [])
     assert len(sns_messages) == 1, "Expected exactly one polling.completed event on SNS"
