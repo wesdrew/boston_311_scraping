@@ -2,10 +2,11 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from polling_lambda import poll_and_enqueue_response, send_to_sqs
 
+from polling.polling_lambda import poll_and_enqueue_response, send_to_sqs
 from shared.boston_311_api.service_request import ServiceRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
+from tests.helpers import make_context, make_response
 
 QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"
 TOPIC_ARN = "arn:aws:sns:us-east-1:123456789:test-topic"
@@ -14,23 +15,8 @@ TOPIC_ARN = "arn:aws:sns:us-east-1:123456789:test-topic"
 # -- helpers ------------------------------------------------------------------
 
 
-def _make_response(count: int) -> ServiceRequestResponse:
-    return ServiceRequestResponse([ServiceRequest(service_request_id=str(i), status="open") for i in range(count)])
-
-
 def _make_response_with_ids(*ids: str) -> ServiceRequestResponse:
     return ServiceRequestResponse([ServiceRequest(service_request_id=sid, status="open") for sid in ids])
-
-
-def _make_context() -> MagicMock:
-    context = MagicMock()
-    context.aws_request_id = "test-request-id"
-    context.function_name = "test-function"
-    context.function_version = "$LATEST"
-    context.invoked_function_arn = "arn:aws:lambda:us-east-1:123456789:function:test"
-    context.log_group_name = "/aws/lambda/test"
-    context.log_stream_name = "2026/03/15/[$LATEST]abc123"
-    return context
 
 
 def _poll(polling_client, sqs, sns, **kwargs):
@@ -38,7 +24,7 @@ def _poll(polling_client, sqs, sns, **kwargs):
         polling_client,
         sqs,
         sns,
-        _make_context(),
+        make_context(),
         sqs_queue_url=kwargs.get("sqs_queue_url", QUEUE_URL),
         sns_topic_arn=kwargs.get("sns_topic_arn", TOPIC_ARN),
     )
@@ -50,7 +36,7 @@ def _poll(polling_client, sqs, sns, **kwargs):
 @pytest.fixture
 def polling_client():
     mock = MagicMock()
-    mock.get_service_requests.return_value = _make_response(3)
+    mock.get_service_requests.return_value = make_response(3)
     return mock
 
 
@@ -70,7 +56,7 @@ def sns():
 
 
 def test_sends_single_batch_when_under_10(sqs):
-    result = send_to_sqs(sqs, QUEUE_URL, _make_response(5))
+    result = send_to_sqs(sqs, QUEUE_URL, make_response(5))
 
     sqs.send_message_batch.assert_called_once()
     assert sqs.send_message_batch.call_args.kwargs["QueueUrl"] == QUEUE_URL
@@ -79,7 +65,7 @@ def test_sends_single_batch_when_under_10(sqs):
 
 
 def test_chunks_into_multiple_batches_when_over_10(sqs):
-    send_to_sqs(sqs, QUEUE_URL, _make_response(25))
+    send_to_sqs(sqs, QUEUE_URL, make_response(25))
 
     assert sqs.send_message_batch.call_count == 3
     batch_sizes = [len(call.kwargs["Entries"]) for call in sqs.send_message_batch.call_args_list]
@@ -87,14 +73,14 @@ def test_chunks_into_multiple_batches_when_over_10(sqs):
 
 
 def test_exactly_10_requests_sends_one_batch(sqs):
-    send_to_sqs(sqs, QUEUE_URL, _make_response(10))
+    send_to_sqs(sqs, QUEUE_URL, make_response(10))
 
     sqs.send_message_batch.assert_called_once()
     assert len(sqs.send_message_batch.call_args.kwargs["Entries"]) == 10
 
 
 def test_returns_zero_when_no_failures(sqs):
-    assert send_to_sqs(sqs, QUEUE_URL, _make_response(3)) == 0
+    assert send_to_sqs(sqs, QUEUE_URL, make_response(3)) == 0
 
 
 def test_returns_failure_count_from_single_batch():
@@ -107,7 +93,7 @@ def test_returns_failure_count_from_single_batch():
         ],
     }
 
-    assert send_to_sqs(sqs, QUEUE_URL, _make_response(5)) == 2
+    assert send_to_sqs(sqs, QUEUE_URL, make_response(5)) == 2
 
 
 def test_accumulates_failure_counts_across_batches():
@@ -123,13 +109,13 @@ def test_accumulates_failure_counts_across_batches():
         },
     ]
 
-    assert send_to_sqs(sqs, QUEUE_URL, _make_response(15)) == 3
+    assert send_to_sqs(sqs, QUEUE_URL, make_response(15)) == 3
 
 
 def test_empty_response_sends_no_batches():
     sqs = MagicMock()
 
-    result = send_to_sqs(sqs, QUEUE_URL, _make_response(0))
+    result = send_to_sqs(sqs, QUEUE_URL, make_response(0))
 
     sqs.send_message_batch.assert_not_called()
     assert result == 0

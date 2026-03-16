@@ -19,7 +19,7 @@ class PollingStack(Stack):
         polling_log_group: aws_logs.LogGroup = aws_logs.LogGroup(
             self,
             "PollingLogGroup",
-            log_group_name="Boston311.polling",
+            log_group_name=construct_id,
             retention=aws_logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.RETAIN,
         )
@@ -31,7 +31,7 @@ class PollingStack(Stack):
             self,
             id="Boston311PollingLambda",
             entry="polling",
-            index="src/polling_lambda.py",
+            index="src/polling/polling_lambda.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),
@@ -51,7 +51,7 @@ class PollingStack(Stack):
                 "PYTHONPATH": "/var/task/src",
                 "SERVICE_REQUESTS_QUEUE_URL": srq.queue.queue_url,
                 "APP_EVENTS_TOPIC_ARN": notifications.topic.topic_arn,
-                otel_env.OTEL_SERVICE_NAME: "boston311.polling",
+                otel_env.OTEL_SERVICE_NAME: construct_id.lower(),
                 otel_env.OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
                 otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",
                 otel_env.OTEL_LOG_LEVEL: "info",

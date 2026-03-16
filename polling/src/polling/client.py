@@ -1,7 +1,8 @@
-from request import ThreeOneOneRequest
 from requests import Response, get
 
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
+
+from .request import ThreeOneOneRequest
 
 
 class ThreeOneOneClientConfigException(Exception):
