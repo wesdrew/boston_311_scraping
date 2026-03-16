@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from request import ThreeOneOneRequest
+from polling.request import ThreeOneOneRequest
 
 
 def test_datetime_fields_serialize_to_z_format():

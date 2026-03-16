@@ -31,7 +31,7 @@ class PollingStack(Stack):
             self,
             id="Boston311PollingLambda",
             entry="polling",
-            index="src/polling_lambda.py",
+            index="src/polling/polling_lambda.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(300),

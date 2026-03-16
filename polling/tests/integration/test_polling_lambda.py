@@ -6,8 +6,8 @@ from uuid import uuid4
 import boto3
 import pytest
 from moto import mock_aws
-from polling_lambda import poll_and_enqueue_response
 
+from polling.polling_lambda import poll_and_enqueue_response
 from shared.boston_311_api.service_request import ServiceRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
 

@@ -2,8 +2,8 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from polling_lambda import poll_and_enqueue_response, send_to_sqs
 
+from polling.polling_lambda import poll_and_enqueue_response, send_to_sqs
 from shared.boston_311_api.service_request import ServiceRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
 

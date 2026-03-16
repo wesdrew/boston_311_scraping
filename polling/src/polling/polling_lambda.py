@@ -5,12 +5,12 @@ from itertools import batched
 import boto3
 from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
-from client import ThreeOneOneClient, ThreeOneOneRequest
-from counters import requests_ingested_counter
 from mypy_boto3_sns import SNSClient
 from mypy_boto3_sqs import SQSClient
 from mypy_boto3_sqs.type_defs import SendMessageBatchResultTypeDef
 
+from polling.client import ThreeOneOneClient, ThreeOneOneRequest
+from polling.counters import requests_ingested_counter
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
 from shared.constants import APP_EVENTS_TOPIC_ARN, POLLING_LOOKBACK_MINUTES, SERVICE_REQUESTS_QUEUE_URL
 from shared.notifications import AppEvent

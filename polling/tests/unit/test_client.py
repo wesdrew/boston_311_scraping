@@ -1,5 +1,6 @@
 import pytest
-from client import ThreeOneOneClient, ThreeOneOneClientConfigException
+
+from polling.client import ThreeOneOneClient, ThreeOneOneClientConfigException
 
 
 @pytest.mark.parametrize("base_url", [None, ""])
