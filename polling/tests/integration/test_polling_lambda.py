@@ -1,5 +1,7 @@
 import json
+import time
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 import boto3
 import pytest
@@ -10,6 +12,12 @@ from shared.boston_311_api.service_request import ServiceRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
 
 REGION = "us-east-1"
+STACK_NAME = "Boston311Polling-dev"
+
+
+# ---------------------------------------------------------------------------
+# Moto helpers
+# ---------------------------------------------------------------------------
 
 
 def _make_response(count: int) -> ServiceRequestResponse:
@@ -32,6 +40,11 @@ def polling_client():
     mock = MagicMock()
     mock.get_service_requests.return_value = _make_response(3)
     return mock
+
+
+# ---------------------------------------------------------------------------
+# Moto tests
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.integration
@@ -83,3 +96,131 @@ def test_completed_event_published_to_sns(polling_client):
     assert event["payload"]["polled_count"] == 3
     assert event["payload"]["enqueued_count"] == 3
     assert event["payload"]["failed_enqueued_count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Live AWS helpers and fixtures
+# ---------------------------------------------------------------------------
+
+
+def _drain_queue(sqs, queue_url: str) -> None:
+    """Receive and delete all messages currently in the queue."""
+    while True:
+        resp = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=1)
+        messages = resp.get("Messages", [])
+        if not messages:
+            break
+        for msg in messages:
+            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=msg["ReceiptHandle"])
+
+
+@pytest.fixture(scope="module")
+def dev_lambda():
+    cfn = boto3.client("cloudformation", region_name=REGION)
+    try:
+        resources = cfn.list_stack_resources(StackName=STACK_NAME)["StackResourceSummaries"]
+    except cfn.exceptions.ValidationError:
+        pytest.skip(f"{STACK_NAME} stack not deployed")
+
+    lambda_resource = next(
+        (r for r in resources if r["ResourceType"] == "AWS::Lambda::Function"),
+        None,
+    )
+    if lambda_resource is None:
+        pytest.skip(f"No Lambda function found in {STACK_NAME}")
+
+    function_name = lambda_resource["PhysicalResourceId"]
+    lambda_client = boto3.client("lambda", region_name=REGION)
+    config = lambda_client.get_function_configuration(FunctionName=function_name)
+    env_vars = config["Environment"]["Variables"]
+
+    return {
+        "function_name": function_name,
+        "queue_url": env_vars["SERVICE_REQUESTS_QUEUE_URL"],
+        "topic_arn": env_vars["APP_EVENTS_TOPIC_ARN"],
+    }
+
+
+@pytest.fixture
+def sns_capture_queue(dev_lambda):
+    sqs = boto3.client("sqs", region_name=REGION)
+    sns = boto3.client("sns", region_name=REGION)
+    topic_arn = dev_lambda["topic_arn"]
+
+    queue_name = f"boston311-test-{uuid4().hex[:8]}"
+    queue_url = sqs.create_queue(QueueName=queue_name)["QueueUrl"]
+    queue_arn = sqs.get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])["Attributes"]["QueueArn"]
+
+    sqs.set_queue_attributes(
+        QueueUrl=queue_url,
+        Attributes={
+            "Policy": json.dumps(
+                {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "sns.amazonaws.com"},
+                            "Action": "sqs:SendMessage",
+                            "Resource": queue_arn,
+                            "Condition": {"ArnEquals": {"aws:SourceArn": topic_arn}},
+                        }
+                    ]
+                }
+            )
+        },
+    )
+
+    subscription_arn = sns.subscribe(TopicArn=topic_arn, Protocol="sqs", Endpoint=queue_arn)["SubscriptionArn"]
+
+    yield queue_url
+
+    sns.unsubscribe(SubscriptionArn=subscription_arn)
+    sqs.delete_queue(QueueUrl=queue_url)
+
+
+# ---------------------------------------------------------------------------
+# Live AWS tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.integration
+def test_dev_lambda_polls_and_enqueues(dev_lambda, sns_capture_queue):
+    sqs = boto3.client("sqs", region_name=REGION)
+    lambda_client = boto3.client("lambda", region_name=REGION)
+
+    queue_url = dev_lambda["queue_url"]
+    function_name = dev_lambda["function_name"]
+
+    _drain_queue(sqs, queue_url)
+
+    response = lambda_client.invoke(FunctionName=function_name, InvocationType="RequestResponse")
+    assert response["StatusCode"] == 200
+    assert "FunctionError" not in response, response["FunctionError"]
+
+    # Collect all SQS messages (poll until a full empty pass)
+    sqs_messages = []
+    empty_passes = 0
+    while empty_passes < 2:
+        result = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
+        batch = result.get("Messages", [])
+        if batch:
+            sqs_messages.extend(batch)
+            empty_passes = 0
+        else:
+            empty_passes += 1
+
+    # Read SNS capture queue for the AppEvent
+    time.sleep(2)  # allow SNS delivery
+    captured = sqs.receive_message(QueueUrl=sns_capture_queue, MaxNumberOfMessages=1, WaitTimeSeconds=10)
+    sns_messages = captured.get("Messages", [])
+    assert len(sns_messages) == 1, "Expected exactly one polling.completed event on SNS"
+
+    envelope = json.loads(sns_messages[0]["Body"])
+    event = json.loads(envelope["Message"])
+    assert event["event_type"] == "polling.completed"
+    assert event["payload"]["failed_enqueued_count"] == 0
+    enqueued_count = event["payload"]["enqueued_count"]
+
+    assert len(sqs_messages) == enqueued_count
+
+    _drain_queue(sqs, queue_url)

@@ -17,5 +17,6 @@ app: App = App()
 Tags.of(app).add("project", "Boston311Polling")
 
 polling_stack: PollingStack = PollingStack(app, "Boston311Polling")
+dev_polling_stack: PollingStack = PollingStack(app, "Boston311Polling-dev")
 
 app.synth()
