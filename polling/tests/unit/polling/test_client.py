@@ -1,5 +1,4 @@
 import pytest
-
 from polling.client import ThreeOneOneClient, ThreeOneOneClientConfigException
 
 

@@ -7,13 +7,13 @@ from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from mypy_boto3_sns import SNSClient
 from mypy_boto3_sqs import SQSClient
-from mypy_boto3_sqs.type_defs import SendMessageBatchResultTypeDef
-
-from polling.client import ThreeOneOneClient, ThreeOneOneRequest
-from polling.counters import requests_ingested_counter
+from mypy_boto3_sqs.type_defs import SendMessageBatchRequestEntryTypeDef, SendMessageBatchResultTypeDef
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
 from shared.constants import APP_EVENTS_TOPIC_ARN, POLLING_LOOKBACK_MINUTES, SERVICE_REQUESTS_QUEUE_URL
 from shared.notifications import AppEvent
+
+from polling.client import ThreeOneOneClient, ThreeOneOneRequest
+from polling.counters import requests_ingested_counter
 
 logger: Logger = Logger(service="polling")
 
@@ -97,7 +97,9 @@ def _create_polling_failed_event(exception: Exception, context: LambdaContext) -
 
 
 def send_to_sqs(sqs_client: SQSClient, queue_url: str, response: ServiceRequestResponse) -> int:
-    entries = [{"Id": req.service_request_id, "MessageBody": req.model_dump_json()} for req in response.root]
+    entries: list[SendMessageBatchRequestEntryTypeDef] = [
+        {"Id": req.service_request_id, "MessageBody": req.model_dump_json()} for req in response.root
+    ]
     failed_count: int = 0
     for chunk in batched(entries, 10):
         result: SendMessageBatchResultTypeDef = sqs_client.send_message_batch(QueueUrl=queue_url, Entries=list(chunk))
