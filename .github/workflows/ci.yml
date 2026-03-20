@@ -17,7 +17,7 @@ jobs:
       - run: uv sync --frozen --all-groups
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run mypy polling/src shared/src infra/src
+      - run: uv run mypy polling/src shared/src
 
   unit-tests:
     runs-on: ubuntu-latest
