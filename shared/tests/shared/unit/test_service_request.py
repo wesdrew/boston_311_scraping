@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
-
 from shared.boston_311_api.extended_attributes import ExtendedAttributes
 from shared.boston_311_api.service_request import ServiceRequest
 

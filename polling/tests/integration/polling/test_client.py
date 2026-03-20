@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
 from polling.client import ThreeOneOneClient
 from polling.request import ThreeOneOneRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse

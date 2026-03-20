@@ -6,8 +6,8 @@ import boto3
 import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
-
 from polling.polling_lambda import poll_and_enqueue_response
+
 from tests.helpers import make_context, make_response
 
 REGION = "us-east-1"

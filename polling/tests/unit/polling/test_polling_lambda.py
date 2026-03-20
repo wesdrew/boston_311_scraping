@@ -2,10 +2,10 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-
 from polling.polling_lambda import poll_and_enqueue_response, send_to_sqs
 from shared.boston_311_api.service_request import ServiceRequest
 from shared.boston_311_api.service_request_response import ServiceRequestResponse
+
 from tests.helpers import make_context, make_response
 
 QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"
