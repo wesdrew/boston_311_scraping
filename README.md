@@ -1,7 +1,5 @@
 # Boston 311 Scraping
 
-We're polling Boston 311 and throwing what we find in a table.
-
 This project polls the Boston 311 Open311 API every 10 minutes, enqueues service requests to SQS, and publishes lifecycle events to SNS — building an event stream for real-time visualization of Boston's 311 data.
 
 ## Architecture
