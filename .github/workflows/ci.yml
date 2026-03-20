@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --frozen --all-groups
+      - run: uv sync --frozen --all-groups --all-packages --all-packages
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy polling/src shared/src
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --frozen --all-groups
+      - run: uv sync --frozen --all-groups --all-packages
       - run: uv run pytest -m "not integration" --tb=short -v
 
   integration-tests:
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --frozen --all-groups
+      - run: uv sync --frozen --all-groups --all-packages
       - run: uv run pytest -m "integration" --tb=short -v
 
   cdk-synth:
@@ -44,6 +44,6 @@ jobs:
         with:
           node-version: '22'
       - run: npm install -g aws-cdk
-      - run: uv sync --frozen --all-groups
+      - run: uv sync --frozen --all-groups --all-packages
       - run: chmod +x synth.sh
       - run: cdk synth --app "./synth.sh"
