@@ -1,11 +1,12 @@
 from aws_cdk import RemovalPolicy, Stack, aws_logs
 from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from constructs import Construct
-from consumer_lambda import ConsumerLambda
-from notifications import Notifications
-from polling_lambda import PollingLambda
-from service_requests_queue import ServiceRequestsQueue
-from shared_layer import SharedLayer
+from shared.notifications import Notifications
+from shared.shared_layer import SharedLayer
+
+from polling.consumer_lambda import ConsumerLambda
+from polling.polling_lambda import PollingLambda
+from polling.service_requests_queue import ServiceRequestsQueue
 
 
 class PollingStack(Stack):
