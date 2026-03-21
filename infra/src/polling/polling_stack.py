@@ -26,14 +26,14 @@ class PollingStack(Stack):
             "PollingLogGroup",
             log_group_name=construct_id,
             retention=aws_logs.RetentionDays.ONE_MONTH,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
         )
         consumer_log_group: aws_logs.LogGroup = aws_logs.LogGroup(
             self,
             "ConsumerLogGroup",
             log_group_name=f"{construct_id}-consumer",
             retention=aws_logs.RetentionDays.ONE_MONTH,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         PollingLambda(
