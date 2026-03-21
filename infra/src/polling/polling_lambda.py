@@ -29,7 +29,7 @@ class PollingLambda(Construct):
             index="src/polling/polling_lambda.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
             memory_size=256,
             log_group=log_group,
             layers=[shared_layer],
