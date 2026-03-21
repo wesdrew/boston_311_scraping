@@ -19,5 +19,6 @@ class ServiceRequestsQueue(Construct):
         self.queue: aws_sqs.Queue = aws_sqs.Queue(
             self,
             "Queue",
+            visibility_timeout=Duration.minutes(15),
             dead_letter_queue=aws_sqs.DeadLetterQueue(max_receive_count=3, queue=self.dlq),
         )
