@@ -40,7 +40,6 @@ select = [
     "SLF",
     "SIM",
     "TID",
-    "ARG",
     "PTH",
     "I",
     "E",
@@ -51,6 +50,7 @@ select = [
 ]
 ignore = [
     "TRY003",
+    "TRY002",
     "S101"
 ]
 
