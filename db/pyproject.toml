@@ -1,0 +1,17 @@
+[project]
+name = "db"
+version = "0.1.0"
+description = "Database schema and access layer for boston311"
+readme = "README.md"
+authors = [
+    { name = "Wes Drew", email = "wesdrew@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pymysql>=1.1",
+    "shared",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
