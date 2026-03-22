@@ -82,7 +82,6 @@ polling = { workspace = true }
 infra = { workspace = true }
 shared = { workspace = true }
 db = { workspace = true }
-# db's shared dep resolved via workspace
 
 [dependency-groups]
 dev = [
