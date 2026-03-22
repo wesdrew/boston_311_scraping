@@ -1,23 +1,30 @@
 import hashlib
 import json
+import os
 
+import boto3
 from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSRecord
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from mypy_boto3_sns import SNSClient
 from pydantic import ValidationError
 from shared.boston_311_api.attribute import Attribute
 from shared.boston_311_api.extended_attributes import ExtendedAttributes
 from shared.boston_311_api.note import Note
 from shared.boston_311_api.photo import Photo
 from shared.boston_311_api.service_request import ServiceRequest
+from shared.constants import APP_EVENTS_TOPIC_ARN
 from shared.internal.internal_attribute import InternalAttribute
 from shared.internal.internal_extended_attributes import InternalExtendedAttributes
 from shared.internal.internal_note import InternalNote
 from shared.internal.internal_photo import InternalPhoto
 from shared.internal.internal_service_request import InternalServiceRequest
+from shared.notifications import AppEvent
 
 logger = Logger()
+
+sns_client: SNSClient = boto3.client("sns")
 
 
 def map_batch_item_to_service_request(record: SQSRecord) -> tuple[str, ServiceRequest | None]:
@@ -124,13 +131,74 @@ def map_to_internal(service_request: ServiceRequest | None) -> InternalServiceRe
         return None
 
 
+def _create_mapper_complete_event(payload: dict, context: LambdaContext) -> AppEvent:
+    return AppEvent(
+        source="boston311.consumer",
+        event_type="consumer.completed",
+        payload={
+            **payload,
+            "lambda_context": {
+                "aws_request_id": context.aws_request_id,
+                "function_name": context.function_name,
+                "function_version": context.function_version,
+                "invoked_function_arn": context.invoked_function_arn,
+                "log_group_name": context.log_group_name,
+                "log_stream_name": context.log_stream_name,
+            },
+        },
+    )
+
+
+def _create_mapper_failed_event(exception: Exception, context: LambdaContext) -> AppEvent:
+    return AppEvent(
+        source="boston311.consumer",
+        event_type="consumer.failed",
+        payload={
+            "exception": {
+                "type": type(exception).__name__,
+                "message": str(exception),
+            },
+            "lambda_context": {
+                "aws_request_id": context.aws_request_id,
+                "function_name": context.function_name,
+                "function_version": context.function_version,
+                "invoked_function_arn": context.invoked_function_arn,
+                "log_group_name": context.log_group_name,
+                "log_stream_name": context.log_stream_name,
+            },
+        },
+    )
+
+
+def map_service_requests_to_internal_objects(event: SQSEvent, context: LambdaContext, sns_client: SNSClient) -> dict:
+    try:
+        logger.info("Beginning mapping service requests")
+        id_to_service_requests: list[tuple[str, ServiceRequest | None]] = [
+            map_batch_item_to_service_request(record) for record in event.records
+        ]
+        id_to_internal_service_requests: list[tuple[str, InternalServiceRequest | None]] = [
+            (record_id, map_to_internal(service_request)) for record_id, service_request in id_to_service_requests
+        ]
+        logger.info("Finished mapping service requests")
+        batch_failures = collect_batch_failures(id_to_internal_service_requests)
+        complete_event = _create_mapper_complete_event(
+            payload={
+                "batch_size": len(id_to_internal_service_requests),
+                "failure_count": len(batch_failures["batchItemFailures"]),
+            },
+            context=context,
+        )
+
+        sns_client.publish(TopicArn=os.environ[APP_EVENTS_TOPIC_ARN], Message=complete_event.model_dump_json())
+        return batch_failures
+    except Exception as e:
+        logger.exception("Exception in consumer function")
+        failed_event = _create_mapper_failed_event(e, context)
+        sns_client.publish(TopicArn=os.environ[APP_EVENTS_TOPIC_ARN], Message=failed_event.model_dump_json())
+        raise
+
+
 @logger.inject_lambda_context
 @event_source(data_class=SQSEvent)
-def handler(event: SQSEvent, _context: LambdaContext) -> dict:
-    id_to_service_requests: list[tuple[str, ServiceRequest | None]] = [
-        map_batch_item_to_service_request(record) for record in event.records
-    ]
-    id_to_internal_service_requests: list[tuple[str, InternalServiceRequest | None]] = [
-        (record_id, map_to_internal(service_request)) for record_id, service_request in id_to_service_requests
-    ]
-    return collect_batch_failures(id_to_internal_service_requests)
+def handler(event: SQSEvent, context: LambdaContext) -> dict:
+    return map_service_requests_to_internal_objects(event, context, sns_client)
