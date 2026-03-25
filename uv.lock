@@ -889,7 +889,6 @@ source = { editable = "polling" }
 dependencies = [
     { name = "aws-lambda-powertools", extra = ["all"] },
     { name = "db" },
-    { name = "opentelemetry-api" },
     { name = "pydantic" },
     { name = "requests" },
 ]
@@ -904,7 +903,6 @@ dev = [
 requires-dist = [
     { name = "aws-lambda-powertools", extras = ["all"], specifier = ">=3.24.0" },
     { name = "db", editable = "db" },
-    { name = "opentelemetry-api", specifier = ">=1.40.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "requests", specifier = ">=2.32.5" },
 ]

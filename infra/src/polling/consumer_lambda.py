@@ -1,6 +1,13 @@
-import opentelemetry.environment_variables as otel_core_env
-import opentelemetry.sdk.environment_variables as otel_env
-from aws_cdk import Duration, aws_lambda, aws_lambda_event_sources, aws_logs, aws_sns, aws_sqs
+from aws_cdk import (
+    Duration,
+    aws_ec2,
+    aws_lambda,
+    aws_lambda_event_sources,
+    aws_logs,
+    aws_secretsmanager,
+    aws_sns,
+    aws_sqs,
+)
 from aws_cdk.aws_lambda_python_alpha import BundlingOptions, PythonFunction, PythonLayerVersion
 from constructs import Construct
 
@@ -16,9 +23,11 @@ class ConsumerLambda(Construct):
         construct_id: str,
         queue: aws_sqs.Queue,
         topic: aws_sns.Topic,
-        stack_name: str,
         shared_layer: PythonLayerVersion,
         log_group: aws_logs.LogGroup,
+        vpc: aws_ec2.Vpc,
+        security_group: aws_ec2.SecurityGroup,
+        db_secret: aws_secretsmanager.Secret,
     ) -> None:
         super().__init__(scope, construct_id)
 
@@ -36,23 +45,13 @@ class ConsumerLambda(Construct):
             bundling=BundlingOptions(asset_excludes=["tests", "__pycache__", "*.pyc"]),
             tracing=aws_lambda.Tracing.ACTIVE,
             insights_version=aws_lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
-            adot_instrumentation=aws_lambda.AdotInstrumentationConfig(
-                layer_version=aws_lambda.AdotLayerVersion.from_python_sdk_layer_version(
-                    aws_lambda.AdotLambdaLayerPythonSdkVersion.LATEST
-                ),
-                exec_wrapper=aws_lambda.AdotLambdaExecWrapper.INSTRUMENT_HANDLER,
-            ),
+            vpc=vpc,
+            vpc_subnets=aws_ec2.SubnetSelection(subnet_type=aws_ec2.SubnetType.PRIVATE_ISOLATED),
+            security_groups=[security_group],
             environment={
                 "PYTHONPATH": "/var/task/src",
                 "APP_EVENTS_TOPIC_ARN": topic.topic_arn,
-                otel_env.OTEL_SERVICE_NAME: f"{stack_name}-consumer".lower(),
-                otel_env.OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
-                otel_env.OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318",
-                otel_env.OTEL_LOG_LEVEL: "info",
-                otel_env.OTEL_TRACES_SAMPLER: "xray",
-                otel_core_env.OTEL_METRICS_EXPORTER: "otlp",
-                otel_core_env.OTEL_TRACES_EXPORTER: "otlp",
-                otel_env.OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "delta",
+                "DB_SECRET_ARN": db_secret.secret_arn,
             },
         )
 
@@ -65,3 +64,4 @@ class ConsumerLambda(Construct):
         )
 
         topic.grant_publish(self.fn)
+        db_secret.grant_read(self.fn)

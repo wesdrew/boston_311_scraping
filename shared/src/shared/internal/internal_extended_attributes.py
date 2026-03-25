@@ -14,3 +14,4 @@ class InternalExtendedAttributes(BaseModel):
     email: str | None = None
     phone: str | None = None
     photos: list[InternalPhoto] = []
+    row_hash: str

@@ -1,7 +1,10 @@
 from aws_cdk import RemovalPolicy, Stack, aws_logs
 from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from constructs import Construct
+from db.service_request_db import ServiceRequestDbStack
+from shared.network_stack import NetworkStack
 from shared.notifications import Notifications
+from shared.secret_stack import SecretStack
 from shared.shared_layer import SharedLayer
 
 from polling.consumer_lambda import ConsumerLambda
@@ -14,7 +17,15 @@ class PollingStack(Stack):
     Polling lambda on cron trigger pulling service requests from the Boston311 API.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, **kwargs: dict) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        network: NetworkStack,
+        db: ServiceRequestDbStack,
+        secret_stack: SecretStack,
+        **kwargs: dict,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         srq: ServiceRequestsQueue = ServiceRequestsQueue(self, "ServiceRequestsQueue")
@@ -41,7 +52,6 @@ class PollingStack(Stack):
             "PollingLambda",
             queue=srq.queue,
             topic=notifications.topic,
-            stack_name=construct_id,
             shared_layer=shared_layer,
             log_group=polling_log_group,
         )
@@ -50,7 +60,9 @@ class PollingStack(Stack):
             "ConsumerLambda",
             queue=srq.queue,
             topic=notifications.topic,
-            stack_name=construct_id,
             shared_layer=shared_layer,
             log_group=consumer_log_group,
+            vpc=network.vpc,
+            security_group=network.consumer_lambda_sg,
+            db_secret=secret_stack.secret,
         )

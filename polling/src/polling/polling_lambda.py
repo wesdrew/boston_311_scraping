@@ -13,7 +13,6 @@ from shared.constants import APP_EVENTS_TOPIC_ARN, POLLING_LOOKBACK_MINUTES, SER
 from shared.notifications import AppEvent
 
 from polling.client import ThreeOneOneClient, ThreeOneOneRequest
-from polling.counters import requests_ingested_counter
 
 logger: Logger = Logger(service="polling")
 
@@ -41,7 +40,6 @@ def poll_and_enqueue_response(
     logger.info("Fetching service requests")
     response: ServiceRequestResponse = polling_client.get_service_requests(request)
     count: int = len(response.root)
-    requests_ingested_counter.add(count)
     logger.info("Response from 311", count=count, response=response)
     failed_to_enqueue_count: int = send_to_sqs(sqs, sqs_queue_url, response)
     complete_event: AppEvent = _create_polling_complete_event(
