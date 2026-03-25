@@ -8,3 +8,4 @@ class InternalAttribute(BaseModel):
     value: str
     name: str
     code: str | None = None
+    row_hash: str

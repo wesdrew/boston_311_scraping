@@ -1,4 +1,3 @@
-import hashlib
 from enum import IntEnum
 
 import pymysql
@@ -46,8 +45,8 @@ _SERVICE_REQUEST_UPSERT_SQL = """
         address             = VALUES(address),
         address_id          = VALUES(address_id),
         zipcode             = VALUES(zipcode),
-        latitude            = VALUES(lat),
-        longitude           = VALUES(`long`),
+        latitude            = VALUES(latitude),
+        longitude           = VALUES(longitude),
         event_hash          = VALUES(event_hash)
 """
 
@@ -70,19 +69,6 @@ class WriteResult(IntEnum):
         return self.name.lower()
 
 
-def _summarize_write_results(results: list[WriteResult]) -> dict[str, int]:
-    return {
-        "rows_not_changed": sum(1 for r in results if r == WriteResult.NO_CHANGE),
-        "rows_inserted": sum(1 for r in results if r == WriteResult.INSERTED),
-        "rows_updated": sum(1 for r in results if r == WriteResult.UPDATED),
-    }
-
-
-def _hash(*parts: str | None) -> str:
-    value = "|".join(p or "" for p in parts)
-    return hashlib.sha256(value.encode()).hexdigest()
-
-
 def _to_write_result(rowcount: int) -> WriteResult:
     if rowcount not in _VALID_ROWCOUNTS:
         raise ValueError(f"Unexpected rowcount: {rowcount}")
@@ -92,6 +78,9 @@ def _to_write_result(rowcount: int) -> WriteResult:
 class ServiceRequestDAO:
     def __init__(self, conn: pymysql.connections.Connection) -> None:
         self._conn = conn
+
+    def ping(self) -> None:
+        self._conn.ping(reconnect=True)
 
     def get_service_request(self, service_request_id: str) -> dict | None:
         sql = """
@@ -110,35 +99,9 @@ class ServiceRequestDAO:
         if not req.service_request_id:
             raise ValueError("service_request_id is required")
 
-        sql = """
-            INSERT INTO service_request (
-                service_request_id, status, status_notes, service_name, service_code,
-                description, requested_datetime, updated_datetime, expected_datetime,
-                address, address_id, zipcode, latitude, longitude, event_hash
-            ) VALUES (
-                %s, %s, %s, %s, %s,
-                %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s
-            )
-            ON DUPLICATE KEY UPDATE
-                status              = VALUES(status),
-                status_notes        = VALUES(status_notes),
-                service_name        = VALUES(service_name),
-                service_code        = VALUES(service_code),
-                description         = VALUES(description),
-                requested_datetime  = VALUES(requested_datetime),
-                updated_datetime    = VALUES(updated_datetime),
-                expected_datetime   = VALUES(expected_datetime),
-                address             = VALUES(address),
-                address_id          = VALUES(address_id),
-                zipcode             = VALUES(zipcode),
-                latitude            = VALUES(lat),
-                longitude           = VALUES(`long`),
-                event_hash          = VALUES(event_hash)
-        """
         with self._conn.cursor() as cursor:
             cursor.execute(
-                sql,
+                _SERVICE_REQUEST_UPSERT_SQL,
                 (
                     req.service_request_id,
                     req.status,
@@ -169,7 +132,6 @@ class ServiceRequestDAO:
 
         x = str(ext.x) if ext.x is not None else None
         y = str(ext.y) if ext.y is not None else None
-        row_hash = _hash(service_request_id, x, y)
 
         sql = """
             INSERT INTO extended_attributes (service_request_id, x, y, row_hash)
@@ -180,7 +142,7 @@ class ServiceRequestDAO:
                 row_hash = VALUES(row_hash)
         """
         with self._conn.cursor() as cursor:
-            cursor.execute(sql, (service_request_id, x, y, row_hash))
+            cursor.execute(sql, (service_request_id, x, y, ext.row_hash))
             return _to_write_result(cursor.rowcount)
 
     def _upsert_attribute(
@@ -191,11 +153,10 @@ class ServiceRequestDAO:
         if not service_request_id:
             raise ValueError("service_request_id is required")
 
-        row_hash = _hash(service_request_id, attr.label, attr.name, attr.code, attr.value)
         with self._conn.cursor() as cursor:
             cursor.execute(
                 _ATTRIBUTE_UPSERT_SQL,
-                (service_request_id, attr.label, attr.value, attr.name, attr.code, row_hash),
+                (service_request_id, attr.label, attr.value, attr.name, attr.code, attr.row_hash),
             )
             return _to_write_result(cursor.rowcount)
 
@@ -213,14 +174,7 @@ class ServiceRequestDAO:
 
         if req.attributes:
             attr_params = [
-                (
-                    req.service_request_id,
-                    attr.label,
-                    attr.value,
-                    attr.name,
-                    attr.code,
-                    _hash(req.service_request_id, attr.label, attr.name, attr.code, attr.value),
-                )
+                (req.service_request_id, attr.label, attr.value, attr.name, attr.code, attr.row_hash)
                 for attr in req.attributes
             ]
             with self._conn.cursor() as cursor:
@@ -251,16 +205,9 @@ class ServiceRequestDAO:
                     )
                     x = str(ext.x) if ext.x is not None else None
                     y = str(ext.y) if ext.y is not None else None
-                    ext_params.append((req.service_request_id, x, y, _hash(req.service_request_id, x, y)))
+                    ext_params.append((req.service_request_id, x, y, ext.row_hash))
             attr_params = [
-                (
-                    req.service_request_id,
-                    attr.label,
-                    attr.value,
-                    attr.name,
-                    attr.code,
-                    _hash(req.service_request_id, attr.label, attr.name, attr.code, attr.value),
-                )
+                (req.service_request_id, attr.label, attr.value, attr.name, attr.code, attr.row_hash)
                 for req in reqs
                 for attr in (req.attributes or [])
             ]
