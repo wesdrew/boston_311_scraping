@@ -7,6 +7,7 @@ from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSRecord
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from db.service_request_dao import ServiceRequestDAO, ServiceRequestSaveException, WriteResult
 from mypy_boto3_sns import SNSClient
 from pydantic import ValidationError
 from shared.boston_311_api.attribute import Attribute
@@ -149,6 +150,27 @@ def _create_mapper_complete_event(payload: dict, context: LambdaContext) -> AppE
     )
 
 
+def _create_save_failed_event(exception: ServiceRequestSaveException, context: LambdaContext) -> AppEvent:
+    return AppEvent(
+        source="boston311.consumer",
+        event_type="consumer.save_failed",
+        payload={
+            "exception": {
+                "type": type(exception).__name__,
+                "message": str(exception),
+            },
+            "lambda_context": {
+                "aws_request_id": context.aws_request_id,
+                "function_name": context.function_name,
+                "function_version": context.function_version,
+                "invoked_function_arn": context.invoked_function_arn,
+                "log_group_name": context.log_group_name,
+                "log_stream_name": context.log_stream_name,
+            },
+        },
+    )
+
+
 def _create_mapper_failed_event(exception: Exception, context: LambdaContext) -> AppEvent:
     return AppEvent(
         source="boston311.consumer",
@@ -170,7 +192,17 @@ def _create_mapper_failed_event(exception: Exception, context: LambdaContext) ->
     )
 
 
-def map_service_requests_to_internal_objects(event: SQSEvent, context: LambdaContext, sns_client: SNSClient) -> dict:
+def _summarize_write_results(results: list[WriteResult]) -> dict:
+    return {
+        "rows_not_changed": sum(1 for r in results if r == WriteResult.NO_CHANGE),
+        "rows_inserted": sum(1 for r in results if r == WriteResult.INSERTED),
+        "rows_updated": sum(1 for r in results if r == WriteResult.UPDATED),
+    }
+
+
+def map_service_requests_to_internal_objects(
+    event: SQSEvent, context: LambdaContext, sns_client: SNSClient, dao: ServiceRequestDAO
+) -> dict:
     try:
         logger.info("Beginning mapping service requests")
         id_to_service_requests: list[tuple[str, ServiceRequest | None]] = [
@@ -180,17 +212,28 @@ def map_service_requests_to_internal_objects(event: SQSEvent, context: LambdaCon
             (record_id, map_to_internal(service_request)) for record_id, service_request in id_to_service_requests
         ]
         logger.info("Finished mapping service requests")
+        write_results: list[WriteResult] = dao.upsert_service_requests(
+            [sr for _, sr in id_to_internal_service_requests if sr is not None]
+        )
+        write_summary: dict[str, int] = _summarize_write_results(write_results)
+        logger.info("Persisted service requests", batch_size=len(id_to_internal_service_requests), **write_summary)
         batch_failures = collect_batch_failures(id_to_internal_service_requests)
         complete_event = _create_mapper_complete_event(
             payload={
                 "batch_size": len(id_to_internal_service_requests),
                 "failure_count": len(batch_failures["batchItemFailures"]),
+                **write_summary,
             },
             context=context,
         )
 
         sns_client.publish(TopicArn=os.environ[APP_EVENTS_TOPIC_ARN], Message=complete_event.model_dump_json())
         return batch_failures
+    except ServiceRequestSaveException as e:
+        logger.exception("Failed to save service requests to the database")
+        save_failed_event = _create_save_failed_event(e, context)
+        sns_client.publish(TopicArn=os.environ[APP_EVENTS_TOPIC_ARN], Message=save_failed_event.model_dump_json())
+        raise
     except Exception as e:
         logger.exception("Exception in consumer function")
         failed_event = _create_mapper_failed_event(e, context)
